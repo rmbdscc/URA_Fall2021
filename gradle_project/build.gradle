@@ -1,0 +1,69 @@
+plugins {
+    id 'groovy'
+    id 'java'
+    id "com.igormaznitsa.gradle.jbbp" version "2.0.1"
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.codehaus.groovy:groovy-all:3.0.5'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "HelloWorld"
+    }
+    archiveBaseName = 'first'
+}
+
+preprocess {
+    sources = sourceSets.main.java.srcDirs
+    allowWhitespaces = true
+    eol = '\r\n'
+    keepAttributes = true
+    sourceEncoding = 'UTF-8'
+    targetEncoding = 'UTF-8'
+    ignoreMissingSources = false
+    excludeExtensions = ['txt', 'xml']
+    fileExtensions = ['java']
+    unknownVarAsFalse = false
+    dryRun = false
+    verbose = true
+    clearTarget = true
+    careForLastEol = true
+    keepComments = true
+    excludeFolders = ['**/some1', '**/some2']
+    configFiles = ['./configFile.txt']
+    keepLines = true
+    allowWhitespaces = true
+    preserveIndents = true
+    dontOverwriteSameContent = false
+    vars = ['some.test.global': 'Some Test Global Value']
+}
+task(changeSourceFolder) {
+    sourceSets.main.java.srcDirs = [preprocess.target]
+}.dependsOn preprocess
+
+
+compileJava.dependsOn preprocess
+
+gradle.buildFinished {
+    println("Incoming preprocess files: " + preprocess.incomingFiles.size())
+    println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
+}
+
+
+
