@@ -1,11 +1,21 @@
-plugins {
-    id 'groovy'
-    id 'java'
-    id "com.igormaznitsa.gradle.jbbp" version "2.0.1"
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.igormaznitsa:jcp:7.0.4'
+    }
 }
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'com.igormaznitsa.jcp'
 
 group 'org.example'
 version '1.0-SNAPSHOT'
+
+mainClassName = 'java.HelloWorld'
 
 repositories {
     mavenLocal()
@@ -29,41 +39,125 @@ jar {
     archiveBaseName = 'first'
 }
 
-preprocess {
-    sources = sourceSets.main.java.srcDirs
-    allowWhitespaces = true
-    eol = '\r\n'
-    keepAttributes = true
-    sourceEncoding = 'UTF-8'
-    targetEncoding = 'UTF-8'
-    ignoreMissingSources = false
-    excludeExtensions = ['txt', 'xml']
-    fileExtensions = ['java']
-    unknownVarAsFalse = false
-    dryRun = false
-    verbose = true
-    clearTarget = true
-    careForLastEol = true
-    keepComments = true
-    excludeFolders = ['**/some1', '**/some2']
-    configFiles = ['./configFile.txt']
-    keepLines = true
-    allowWhitespaces = true
-    preserveIndents = true
-    dontOverwriteSameContent = false
-    vars = ['some.test.global': 'Some Test Global Value']
+task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
+
+    sourceSets.main.output.each { println it}
+        println "executing compileWithJava8"
+
+//        preprocess {
+            sources = sourceSets.main.java.srcDirs
+            allowWhitespaces = true
+            eol = '\r\n'
+            keepAttributes = true
+            sourceEncoding = 'UTF-8'
+            targetEncoding = 'UTF-8'
+            ignoreMissingSources = false
+            excludeExtensions = ['txt', 'xml']
+            fileExtensions = ['java']
+            unknownVarAsFalse = false
+            dryRun = false
+            verbose = true
+            clearTarget = true
+            careForLastEol = true
+            keepComments = true
+            excludeFolders = ['**/some1', '**/some2']
+            //    configFiles = ['./configFile.txt']
+            keepLines = true
+            allowWhitespaces = true
+            preserveIndents = true
+            dontOverwriteSameContent = false
+            vars = [isJava8: 'true']
+            target = new File(project.buildDir, "jcp" + File.separatorChar + "java")
+//        }
+//        doLast{
+//            println("Incoming preprocess files: " + preprocess.incomingFiles.size())
+//            println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
+//        }
+//        task(changeSourceFolder1) {
+//            sourceSets.main.java.srcDirs = [preprocess.target]
+//        }.dependsOn preprocess
+//        compileJava.dependsOn preprocess
+
 }
-task(changeSourceFolder) {
-    sourceSets.main.java.srcDirs = [preprocess.target]
-}.dependsOn preprocess
+
+task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
+
+        println "executing compileWithJava11"
+        println sourceSets.main.java.srcDirs
+
+        sources = sourceSets.main.java.srcDirs
+        allowWhitespaces = true
+        eol = '\r\n'
+        keepAttributes = true
+        sourceEncoding = 'UTF-8'
+        targetEncoding = 'UTF-8'
+        ignoreMissingSources = false
+        excludeExtensions = ['txt', 'xml']
+        fileExtensions = ['java']
+        unknownVarAsFalse = false
+        dryRun = false
+        verbose = true
+        clearTarget = true
+        careForLastEol = true
+        keepComments = true
+        excludeFolders = ['**/some1', '**/some2']
+        //    configFiles = ['./configFile.txt']
+        keepLines = true
+        allowWhitespaces = true
+        preserveIndents = true
+        dontOverwriteSameContent = false
+        vars = [isJava8: 'false']
+        target = new File(project.buildDir, "jcp" + File.separatorChar + "java11")
+
+        doLast{
+            println("Incoming preprocess files: " + incomingFiles.size())
+            println("Resulted preprocess files: " + outcomingFiles.size())
+        }
 
 
-compileJava.dependsOn preprocess
+//        task(changeSourceFolder2) {
+//            sourceSets.main.java.srcDirs = [preprocess.target]
+//        }.dependsOn preprocess
 
-gradle.buildFinished {
-    println("Incoming preprocess files: " + preprocess.incomingFiles.size())
-    println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
 }
+
+task deleteDuplicatedFiles(){
+    // find duplicated
+
+//    doLast {
+//        FileTree tree = fileTree(dir: 'build/jcp')
+//        tree.visit { FileVisitDetails fvd ->
+//            if(fvd.file.isFile())
+//                println fvd.file
+//        }
+//    }
+
+}
+
+compileWithJava8.dependsOn(compileWithJava11)
+compileJava.dependsOn compileWithJava8
+
+
+
+
+//compileJava.dependsOn preprocess
+
+//gradle.buildFinished {
+//    println("Incoming preprocess files: " + preprocess.incomingFiles.size())
+//    println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
+//}
+
+// move files around
+
+// change files tree
+
+// using HashMap
+//
+
+// Delete dupilcated files
+// Java 8 tree
+
+// Java 11 tree
 
 
 
