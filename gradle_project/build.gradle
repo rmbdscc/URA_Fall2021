@@ -121,21 +121,54 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
 }
 
+import java.security.MessageDigest
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths
 task deleteDuplicatedFiles(){
-    // find duplicated
 
-//    doLast {
-//        FileTree tree = fileTree(dir: 'build/jcp')
-//        tree.visit { FileVisitDetails fvd ->
-//            if(fvd.file.isFile())
-//                println fvd.file
-//        }
-//    }
+    doLast {
+
+        Set<String> fileSet = new HashSet<>()
+
+        FileTree javaTree = fileTree(dir: 'build/jcp/java')
+        javaTree.visit { FileVisitDetails fvd ->
+            if(fvd.file.isFile()) {
+
+                byte[] fileContent = Files.readAllBytes(Paths.get(fvd.file.toString()));
+                byte[] hash = MessageDigest.getInstance("MD5").digest(fileContent);
+
+                fileSet.add(hash.toString())
+            }
+        }
+
+        FileTree java11Tree = fileTree(dir: 'build/jcp/java11')
+        java11Tree.visit { FileVisitDetails fvd ->
+            if(fvd.file.isFile()) {
+
+                byte[] fileContent = Files.readAllBytes(Paths.get(fvd.file.toString()));
+                byte[] hash = MessageDigest.getInstance("MD5").digest(fileContent);
+
+                if (fileSet.contains(hash.toString())){
+                    println ("found duplicated file: " + fvd.file)
+                    project.delete(
+                            files(fvd.file)
+                    )
+                    println ("found duplicated file: " + fvd.file)
+                }
+
+            }
+        }
+
+
+    }
 
 }
 
 compileWithJava8.dependsOn(compileWithJava11)
-compileJava.dependsOn compileWithJava8
+deleteDuplicatedFiles.dependsOn compileWithJava8
+compileJava.dependsOn deleteDuplicatedFiles
+
 
 
 

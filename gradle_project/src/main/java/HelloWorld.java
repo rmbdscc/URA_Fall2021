@@ -2,8 +2,8 @@
 public class HelloWorld {
 
     public static String getGreeting() {
-        String message = "";
 
+        String message = "";
         //#if isJava8
         message += "Java8 is true!";
         //#else
@@ -13,7 +13,6 @@ public class HelloWorld {
         return message;
     }
 
-    public static void main(String[] args) {
-        System.out.println(getGreeting());
-    }
 }
+
+// to write tests
