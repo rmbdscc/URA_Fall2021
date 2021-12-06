@@ -8,7 +8,11 @@ buildscript {
     }
 }
 
-apply plugin: 'java'
+plugins {
+    id 'java-library'
+}
+
+//apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.igormaznitsa.jcp'
 
@@ -17,15 +21,29 @@ version '1.0-SNAPSHOT'
 
 mainClassName = 'java.HelloWorld'
 
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
 }
-
+sourceSets {
+    java11 {
+        java {
+            srcDirs = ['build/jcp/java11']
+        }
+    }
+}
 dependencies {
     implementation 'org.codehaus.groovy:groovy-all:3.0.5'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    java11Implementation files(sourceSets.main.output.classesDirs)
 }
 
 test {
@@ -33,54 +51,62 @@ test {
 }
 
 jar {
-    manifest {
-        attributes "Main-Class": "HelloWorld"
+    into('META-INF/versions/11') {
+        from sourceSets.java11.output
     }
+    manifest.attributes(
+            'Multi-Release': 'true',
+            'Main-Class': 'Main'
+    )
     archiveBaseName = 'first'
+}
+
+tasks.named('compileJava11Java') {
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
 
 task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
     sourceSets.main.output.each { println it}
-        println "executing compileWithJava8"
+    println "executing compileWithJava8"
 
 //        preprocess {
-            sources = sourceSets.main.java.srcDirs
-            allowWhitespaces = true
-            eol = '\r\n'
-            keepAttributes = true
-            sourceEncoding = 'UTF-8'
-            targetEncoding = 'UTF-8'
-            ignoreMissingSources = false
-            excludeExtensions = ['txt', 'xml']
-            fileExtensions = ['java']
-            unknownVarAsFalse = false
-            dryRun = false
-            verbose = true
-            clearTarget = true
-            careForLastEol = true
-            keepComments = true
-            excludeFolders = ['**/some1', '**/some2']
-            //    configFiles = ['./configFile.txt']
-            keepLines = true
-            allowWhitespaces = true
-            preserveIndents = true
-            dontOverwriteSameContent = false
-            vars = [isJava8: 'true']
-            target = new File(project.buildDir, "jcp" + File.separatorChar + "java")
-//        }
+
+        sources = sourceSets.main.java.srcDirs
+        allowWhitespaces = true
+        eol = '\r\n'
+        keepAttributes = true
+        sourceEncoding = 'UTF-8'
+        targetEncoding = 'UTF-8'
+        ignoreMissingSources = false
+        excludeExtensions = ['txt', 'xml']
+        fileExtensions = ['java']
+        unknownVarAsFalse = false
+        dryRun = false
+        verbose = true
+        clearTarget = true
+        careForLastEol = true
+        keepComments = true
+        excludeFolders = ['**/some1', '**/some2']
+        //    configFiles = ['./configFile.txt']
+        keepLines = true
+        allowWhitespaces = true
+        preserveIndents = true
+        dontOverwriteSameContent = false
+        vars = [isJava8: 'true']
+        target = new File(project.buildDir, "jcp" + File.separatorChar + "java")
+
 //        doLast{
 //            println("Incoming preprocess files: " + preprocess.incomingFiles.size())
 //            println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
 //        }
-//        task(changeSourceFolder1) {
-//            sourceSets.main.java.srcDirs = [preprocess.target]
-//        }.dependsOn preprocess
-//        compileJava.dependsOn preprocess
 
 }
 
 task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
+
 
         println "executing compileWithJava11"
         println sourceSets.main.java.srcDirs
@@ -109,57 +135,63 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
         vars = [isJava8: 'false']
         target = new File(project.buildDir, "jcp" + File.separatorChar + "java11")
 
-        doLast{
-            println("Incoming preprocess files: " + incomingFiles.size())
-            println("Resulted preprocess files: " + outcomingFiles.size())
-        }
-
-
-//        task(changeSourceFolder2) {
-//            sourceSets.main.java.srcDirs = [preprocess.target]
-//        }.dependsOn preprocess
+    doLast{
+        println("Incoming preprocess files: " + incomingFiles.size())
+        println("Resulted preprocess files: " + outcomingFiles.size())
+    }
 
 }
 
-import java.security.MessageDigest
-import java.io.FileInputStream;
+task changeSourceFolder(){
+    doLast{
+        sourceSets.main.java.srcDirs = ["build/jcp/java"]
+
+    }
+}
+import java.io.File;
+import java.security.MessageDigest;
 import java.nio.file.Files;
-import java.nio.file.Paths
+import java.nio.file.Paths;
 task deleteDuplicatedFiles(){
 
     doLast {
 
-        Set<String> fileSet = new HashSet<>()
+        Set<String> directorySet = new TreeSet<>()
 
-        FileTree javaTree = fileTree(dir: 'build/jcp/java')
-        javaTree.visit { FileVisitDetails fvd ->
-            if(fvd.file.isFile()) {
-
-                byte[] fileContent = Files.readAllBytes(Paths.get(fvd.file.toString()));
-                byte[] hash = MessageDigest.getInstance("MD5").digest(fileContent);
-
-                fileSet.add(hash.toString())
-            }
-        }
-
-        FileTree java11Tree = fileTree(dir: 'build/jcp/java11')
-        java11Tree.visit { FileVisitDetails fvd ->
-            if(fvd.file.isFile()) {
-
-                byte[] fileContent = Files.readAllBytes(Paths.get(fvd.file.toString()));
-                byte[] hash = MessageDigest.getInstance("MD5").digest(fileContent);
-
-                if (fileSet.contains(hash.toString())){
-                    println ("found duplicated file: " + fvd.file)
-                    project.delete(
-                            files(fvd.file)
-                    )
-                    println ("found duplicated file: " + fvd.file)
+        // get all directories and stored them in alphabetically sorted order
+        fileTree(dir: 'build/jcp').visit { FileVisitDetails fvd ->
+            if(fvd.file.isDirectory()) {
+                File f = new File(fvd.file.toString());
+                // skip sub-folders
+                if(!directorySet.contains(f.getParentFile())){
+                    directorySet.add(fvd.file)
                 }
 
             }
         }
 
+        Map<String, String> fileMap = new HashMap<>()
+
+        for(String directory : directorySet){
+
+            fileTree(dir: directory).visit { FileVisitDetails fvd ->
+                if(fvd.file.isFile()) {
+
+                    byte[] fileContent = Files.readAllBytes(Paths.get(fvd.file.toString()));
+                    byte[] hash = MessageDigest.getInstance("MD5").digest(fileContent);
+
+                    if(fileMap.containsKey(fvd.getRelativePath())){
+                        if(fileMap.get(fvd.getRelativePath()).equals(hash.toString())){
+                            println ("found duplicated file: " + fvd.file)
+                        }
+
+                    }
+                    else {
+                        fileMap.put(fvd.getRelativePath(), hash.toString())
+                    }
+                }
+            }
+        }
 
     }
 
@@ -167,30 +199,14 @@ task deleteDuplicatedFiles(){
 
 compileWithJava8.dependsOn(compileWithJava11)
 deleteDuplicatedFiles.dependsOn compileWithJava8
-compileJava.dependsOn deleteDuplicatedFiles
+changeSourceFolder.dependsOn deleteDuplicatedFiles
+compileJava.dependsOn changeSourceFolder
 
-
-
-
+// fix dependencies
+// look at subproject gradle build
 
 //compileJava.dependsOn preprocess
 
-//gradle.buildFinished {
-//    println("Incoming preprocess files: " + preprocess.incomingFiles.size())
-//    println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
-//}
-
-// move files around
-
-// change files tree
-
-// using HashMap
-//
-
-// Delete dupilcated files
-// Java 8 tree
-
-// Java 11 tree
 
 
 
