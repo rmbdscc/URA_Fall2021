@@ -1,4 +1,3 @@
-
 buildscript {
     repositories {
         mavenCentral()
@@ -20,8 +19,6 @@ group 'org.example'
 version '1.0-SNAPSHOT'
 
 mainClassName = 'java.HelloWorld'
-
-
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(8))
@@ -69,69 +66,68 @@ tasks.named('compileJava11Java') {
 
 task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
-    sourceSets.main.output.each { println it}
-    println "executing compileWithJava8"
+    println "executing compileWithJava"
+    println sourceSets.main.java.srcDirs
 
 //        preprocess {
 
         sources = sourceSets.main.java.srcDirs
-        allowWhitespaces = true
-        eol = '\r\n'
-        keepAttributes = true
-        sourceEncoding = 'UTF-8'
-        targetEncoding = 'UTF-8'
-        ignoreMissingSources = false
-        excludeExtensions = ['txt', 'xml']
-        fileExtensions = ['java']
-        unknownVarAsFalse = false
-        dryRun = false
-        verbose = true
-        clearTarget = true
-        careForLastEol = true
-        keepComments = true
-        excludeFolders = ['**/some1', '**/some2']
-        //    configFiles = ['./configFile.txt']
-        keepLines = true
-        allowWhitespaces = true
-        preserveIndents = true
-        dontOverwriteSameContent = false
+//        allowWhitespaces = true
+//        eol = '\r\n'
+//        keepAttributes = true
+//        sourceEncoding = 'UTF-8'
+//        targetEncoding = 'UTF-8'
+//        ignoreMissingSources = false
+//        excludeExtensions = ['txt', 'xml']
+//        fileExtensions = ['java']
+//        unknownVarAsFalse = false
+//        dryRun = false
+//        verbose = true
+//        clearTarget = true
+//        careForLastEol = true
+//        keepComments = true
+//        excludeFolders = ['**/some1', '**/some2']
+//        //    configFiles = ['./configFile.txt']
+//        keepLines = true
+//        allowWhitespaces = true
+//        preserveIndents = true
+//        dontOverwriteSameContent = false
         vars = [isJava8: 'true']
         target = new File(project.buildDir, "jcp" + File.separatorChar + "java")
-
-//        doLast{
-//            println("Incoming preprocess files: " + preprocess.incomingFiles.size())
-//            println("Resulted preprocess files: " + preprocess.outcomingFiles.size())
-//        }
+        doLast{
+            println("Incoming preprocess files: " + incomingFiles.size())
+            println("Resulted preprocess files: " + outcomingFiles.size())
+        }
 
 }
 
 task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
-
         println "executing compileWithJava11"
         println sourceSets.main.java.srcDirs
 
         sources = sourceSets.main.java.srcDirs
-        allowWhitespaces = true
-        eol = '\r\n'
-        keepAttributes = true
-        sourceEncoding = 'UTF-8'
-        targetEncoding = 'UTF-8'
-        ignoreMissingSources = false
-        excludeExtensions = ['txt', 'xml']
-        fileExtensions = ['java']
-        unknownVarAsFalse = false
-        dryRun = false
-        verbose = true
-        clearTarget = true
-        careForLastEol = true
-        keepComments = true
-        excludeFolders = ['**/some1', '**/some2']
+
+//        allowWhitespaces = true
+//        eol = '\r\n'
+//        keepAttributes = true
+//        sourceEncoding = 'UTF-8'
+//        targetEncoding = 'UTF-8'
+//        ignoreMissingSources = false
+//        excludeExtensions = ['txt', 'xml']
+//        fileExtensions = ['java']
+//        unknownVarAsFalse = false
+//        dryRun = false
+//        verbose = true
+//        clearTarget = true
+//        careForLastEol = true
+//        keepComments = true
+//        excludeFolders = ['**/some1', '**/some2']
         //    configFiles = ['./configFile.txt']
-        keepLines = true
-        allowWhitespaces = true
-        preserveIndents = true
-        dontOverwriteSameContent = false
+//        keepLines = true
+//        allowWhitespaces = true
+//        preserveIndents = true
+//        dontOverwriteSameContent = true
         vars = [isJava8: 'false']
         target = new File(project.buildDir, "jcp" + File.separatorChar + "java11")
 
@@ -145,7 +141,6 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 task changeSourceFolder(){
     doLast{
         sourceSets.main.java.srcDirs = ["build/jcp/java"]
-
     }
 }
 import java.io.File;
@@ -156,45 +151,41 @@ task deleteDuplicatedFiles(){
 
     doLast {
 
-        Set<String> directorySet = new TreeSet<>()
-
-        // get all directories and stored them in alphabetically sorted order
-        fileTree(dir: 'build/jcp').visit { FileVisitDetails fvd ->
-            if(fvd.file.isDirectory()) {
-                File f = new File(fvd.file.toString());
-                // skip sub-folders
-                if(!directorySet.contains(f.getParentFile())){
-                    directorySet.add(fvd.file)
-                }
-
+        // get all directories just below the jcp directory
+        File dir = new File("build/jcp")
+        File[] directories = new File("build/jcp").listFiles()
+        FileFilter fileFilter = new FileFilter() {
+            public boolean accept(File file) {
+                return file.isDirectory();
             }
         }
+        directories = dir.listFiles(fileFilter);
+        // stored the directories in alphabetical order
+        Arrays.sort(directories)
+//        println directories.toString()
 
         Map<String, String> fileMap = new HashMap<>()
-
-        for(String directory : directorySet){
+        for(String directory : directories){
 
             fileTree(dir: directory).visit { FileVisitDetails fvd ->
                 if(fvd.file.isFile()) {
-
+                    // calculate the MD5 hash for the file
                     byte[] fileContent = Files.readAllBytes(Paths.get(fvd.file.toString()));
-                    byte[] hash = MessageDigest.getInstance("MD5").digest(fileContent);
+                    String relativePath = fvd.getRelativePath()
+                    String hashString = MessageDigest.getInstance("MD5").digest(fileContent).toString();
 
-                    if(fileMap.containsKey(fvd.getRelativePath())){
-                        if(fileMap.get(fvd.getRelativePath()).equals(hash.toString())){
+                    if(fileMap.containsKey(relativePath)){
+                        if(fileMap.get(relativePath).equals(hashString)){
                             println ("found duplicated file: " + fvd.file)
+                            project.delete(files(fvd.file))
                         }
-
-                    }
-                    else {
-                        fileMap.put(fvd.getRelativePath(), hash.toString())
+                    } else {
+                        fileMap.put(relativePath, hashString)
                     }
                 }
             }
         }
-
     }
-
 }
 
 compileWithJava8.dependsOn(compileWithJava11)
