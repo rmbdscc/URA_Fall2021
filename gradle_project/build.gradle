@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.igormaznitsa:jcp:7.0.4'
+        classpath 'com.igormaznitsa:jcp:7.0.5'
     }
 }
 
@@ -69,9 +69,15 @@ task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
     println "executing compileWithJava"
     println sourceSets.main.java.srcDirs
 
+//    println getBuildFile().toString()
+//    inputs.file('build/jcp/java')
+    outputs.file('build/jcp/java')
+
 //        preprocess {
 
         sources = sourceSets.main.java.srcDirs
+
+    // cleanup the config
 //        allowWhitespaces = true
 //        eol = '\r\n'
 //        keepAttributes = true
@@ -107,6 +113,7 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
         println sourceSets.main.java.srcDirs
 
         sources = sourceSets.main.java.srcDirs
+        outputs.file('build/jcp/java11')
 
 //        allowWhitespaces = true
 //        eol = '\r\n'
