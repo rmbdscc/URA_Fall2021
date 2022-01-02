@@ -4,7 +4,7 @@ public class HelloWorld {
     public static String getGreeting() {
 
         String message = "";
-        //#if isJava8
+        //#if currentJava == 8
         message += "Java8 is true!";
         //#else
         message += "Not Java 8!";

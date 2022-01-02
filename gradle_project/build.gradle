@@ -8,6 +8,8 @@ buildscript {
 }
 
 plugins {
+    id "me.champeau.mrjar" version "0.1"
+
     id 'java-library'
 }
 
@@ -17,6 +19,10 @@ apply plugin: 'com.igormaznitsa.jcp'
 
 group 'org.example'
 version '1.0-SNAPSHOT'
+
+multiRelease {
+    targetVersions 8, 11
+}
 
 mainClassName = 'java.HelloWorld'
 java {
@@ -29,40 +35,40 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
-sourceSets {
-    java11 {
-        java {
-            srcDirs = ['build/jcp/java11']
-        }
-    }
-}
+//sourceSets {
+//    java11 {
+//        java {
+//            srcDirs = ['build/jcp/java11']
+//        }
+//    }
+//}
 dependencies {
     implementation 'org.codehaus.groovy:groovy-all:3.0.5'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-    java11Implementation files(sourceSets.main.output.classesDirs)
+//    java11Implementation files(sourceSets.main.output.classesDirs)
 }
 
 test {
     useJUnitPlatform()
 }
 
-jar {
-    into('META-INF/versions/11') {
-        from sourceSets.java11.output
-    }
-    manifest.attributes(
-            'Multi-Release': 'true',
-            'Main-Class': 'Main'
-    )
-    archiveBaseName = 'first'
-}
-
-tasks.named('compileJava11Java') {
-    javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
-}
+//jar {
+//    into('META-INF/versions/11') {
+//        from sourceSets.java11.output
+//    }
+//    manifest.attributes(
+//            'Multi-Release': 'true',
+//            'Main-Class': 'Main'
+//    )
+//    archiveBaseName = 'first'
+//}
+//
+//tasks.named('compileJava11Java') {
+//    javaCompiler = javaToolchains.compilerFor {
+//        languageVersion = JavaLanguageVersion.of(11)
+//    }
+//}
 
 task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
@@ -71,11 +77,10 @@ task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
 //    println getBuildFile().toString()
 //    inputs.file('build/jcp/java')
-    outputs.file('build/jcp/java')
+    outputs.dir('build/jcp/java')
+    sources = sourceSets.main.java.srcDirs
 
 //        preprocess {
-
-        sources = sourceSets.main.java.srcDirs
 
     // cleanup the config
 //        allowWhitespaces = true
@@ -98,7 +103,9 @@ task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 //        allowWhitespaces = true
 //        preserveIndents = true
 //        dontOverwriteSameContent = false
-        vars = [isJava8: 'true']
+
+        // change vars compare integers
+        vars = [isJava8: 'true', currentJava = 8]
         target = new File(project.buildDir, "jcp" + File.separatorChar + "java")
         doLast{
             println("Incoming preprocess files: " + incomingFiles.size())
@@ -113,28 +120,8 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
         println sourceSets.main.java.srcDirs
 
         sources = sourceSets.main.java.srcDirs
-        outputs.file('build/jcp/java11')
+        outputs.dir('build/jcp/java11')
 
-//        allowWhitespaces = true
-//        eol = '\r\n'
-//        keepAttributes = true
-//        sourceEncoding = 'UTF-8'
-//        targetEncoding = 'UTF-8'
-//        ignoreMissingSources = false
-//        excludeExtensions = ['txt', 'xml']
-//        fileExtensions = ['java']
-//        unknownVarAsFalse = false
-//        dryRun = false
-//        verbose = true
-//        clearTarget = true
-//        careForLastEol = true
-//        keepComments = true
-//        excludeFolders = ['**/some1', '**/some2']
-        //    configFiles = ['./configFile.txt']
-//        keepLines = true
-//        allowWhitespaces = true
-//        preserveIndents = true
-//        dontOverwriteSameContent = true
         vars = [isJava8: 'false']
         target = new File(project.buildDir, "jcp" + File.separatorChar + "java11")
 
