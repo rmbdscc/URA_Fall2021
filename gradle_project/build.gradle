@@ -8,8 +8,6 @@ buildscript {
 }
 
 plugins {
-    id "me.champeau.mrjar" version "0.1"
-
     id 'java-library'
 }
 
@@ -20,11 +18,8 @@ apply plugin: 'com.igormaznitsa.jcp'
 group 'org.example'
 version '1.0-SNAPSHOT'
 
-multiRelease {
-    targetVersions 8, 11
-}
-
 mainClassName = 'java.HelloWorld'
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(8))
@@ -35,6 +30,7 @@ repositories {
     mavenLocal()
     mavenCentral()
 }
+
 sourceSets {
     java11 {
         java {
@@ -42,18 +38,26 @@ sourceSets {
         }
     }
 }
+
 dependencies {
     implementation 'org.codehaus.groovy:groovy-all:3.0.5'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-//    java11Implementation files(sourceSets.main.output.classesDirs)
+
 }
 
 test {
     useJUnitPlatform()
 }
 
+tasks.named('compileJava11Java') {
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
 jar {
+    // added duplicatesStrategy to avoid warning messages
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     into('META-INF/versions/11') {
@@ -63,43 +67,39 @@ jar {
             'Multi-Release': 'true',
             'Main-Class': 'Main'
     )
-    archiveBaseName = 'first'
-}
-
-tasks.named('compileJava11Java') {
-    javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
+    archiveBaseName = 'mutli-release'
 }
 
 task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
-    println "executing compileWithJava"
+    println "executing compileWithJava8"
     println sourceSets.main.java.srcDirs
 
-    outputs.dir('build/jcp/java')
+    def java_dir = 'build/jcp/java'
+    outputs.dir(java_dir)
     sources = sourceSets.main.java.srcDirs
 
-        // change vars compare integers
-        vars = [currentJava: '8']
-        target = new File(project.buildDir, "jcp" + File.separatorChar + "java")
-        doLast{
-            println("Incoming preprocess files: " + incomingFiles.size())
-            println("Resulted preprocess files: " + outcomingFiles.size())
-        }
+    vars = [currentJava: '8']
+    target = new File(java_dir)
+    doLast{
+        println("Incoming preprocess files: " + incomingFiles.size())
+        println("Resulted preprocess files: " + outcomingFiles.size())
+    }
 
 }
 
 task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
-        println "executing compileWithJava11"
-        println sourceSets.main.java.srcDirs
+    println "executing compileWithJava11"
+    println sourceSets.main.java.srcDirs
 
-        sources = sourceSets.main.java.srcDirs
-        outputs.dir('build/jcp/java11')
+    def java_dir = 'build/jcp/java11'
 
-        vars = [currentJava: '11']
-        target = new File(project.buildDir, "jcp" + File.separatorChar + "java11")
+    outputs.dir(java_dir)
+    sources = sourceSets.main.java.srcDirs
+
+    vars = [currentJava: '11']
+    target = new File(java_dir)
 
     doLast{
         println("Incoming preprocess files: " + incomingFiles.size())
@@ -161,11 +161,6 @@ compileWithJava8.dependsOn(compileWithJava11)
 deleteDuplicatedFiles.dependsOn compileWithJava8
 changeSourceFolder.dependsOn deleteDuplicatedFiles
 compileJava.dependsOn changeSourceFolder
-
-// fix dependencies
-// look at subproject gradle build
-
-//compileJava.dependsOn preprocess
 
 
 
