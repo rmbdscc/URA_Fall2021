@@ -5,9 +5,13 @@ public class HelloWorld {
 
         String message = "";
         //#if currentJava == 8
-        message += "Java8 is true!";
-        //#else
-        message += "Not Java 8!";
+        message += "Currently Java 8!";
+        //#endif
+        //#if currentJava == 11
+        message += "Currently Java 11!";
+        //#endif
+        //#if currentJava == 16
+        message += "Currently Java 16!";
         //#endif
 
         return message;
