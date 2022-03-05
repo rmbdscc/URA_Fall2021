@@ -10,8 +10,8 @@ public class HelloWorld {
         //#if currentJava == 11
         message += "Currently Java 11!";
         //#endif
-        //#if currentJava == 16
-        message += "Currently Java 16!";
+        //#if currentJava == 18
+        message += "Currently Java 18!";
         //#endif
 
         return message;
