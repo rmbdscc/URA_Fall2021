@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        // Similar to the JCP example, let's not put the plugin directory inside this projec, i.e. "../../xxxx".
         flatDir dirs: "./build/libs"
     }
     dependencies {
@@ -25,6 +26,7 @@ mainClassName = 'java.HelloWorld'
 
 java {
     toolchain {
+        // is this necessary?
         languageVersion.set(JavaLanguageVersion.of(8))
     }
 }
@@ -35,14 +37,15 @@ repositories {
 }
 
 multiRelease {
+    // why is there two 8s?
     targetVersions "build/jcp/", "build/jcp/", 8, 8, 11
 }
 
 dependencies {
+    // note: I think we don't need to add this part to the checker framework.
     implementation 'org.codehaus.groovy:groovy-all:3.0.5'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-
 }
 
 test {
@@ -51,8 +54,10 @@ test {
 
 jar {
     // added duplicatesStrategy to avoid warning messages
+    // let's try if we can remote this DuplicatesStrategy
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    // I thought mr-jars should handle this automatically. no?
     into('META-INF/versions/11') {
         from sourceSets.java11.output
     }
@@ -63,8 +68,11 @@ jar {
     archiveBaseName = 'mutli-release'
 }
 
+// instead of having one task per java version, let's iterate through a list of
+// java versions, and programmatically register one new task per java version.
+// ref: https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:dynamic_tasks
 task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
-
+    // note: printlns were here for debugging
     println "executing compileWithJava8"
     println sourceSets.main.java.srcDirs
 
@@ -82,7 +90,7 @@ task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 }
 
 task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
-
+    // note: printlns were here for debugging
     println "executing compileWithJava11"
     println sourceSets.main.java.srcDirs
 
@@ -101,7 +109,7 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
 }
 
-task changeSourceFolder(){
+task changeSourceFolder() {
     doLast{
         sourceSets.main.java.srcDirs = ["build/jcp/java"]
     }
@@ -116,6 +124,9 @@ task deleteDuplicatedFiles(){
 
         // get all directories just below the jcp directory
         File dir = new File("build/jcp")
+        
+        // why not just directories = Arrays.sort(new File("build/jcp").listFiles(fileFilter))
+        
         File[] directories = new File("build/jcp").listFiles()
         FileFilter fileFilter = new FileFilter() {
             public boolean accept(File file) {
