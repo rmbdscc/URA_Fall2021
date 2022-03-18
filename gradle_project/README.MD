@@ -2,8 +2,8 @@
 This folder contains all files needed to run this project
 
 ## Usage
-To creates pre-processed Java files in `build/jcp`, run `./gralew build` or `./gralew assemble`<br />
-To clean the generated files, run `./gralew clean` pre-processed Java files<br />
+To creates pre-processed Java files in `build/jcp`, run `./gradlew build` or `./gradlew assemble`<br />
+To clean the generated files, run `./gradlew clean` pre-processed Java files<br />
 To execute the generated multi-release jar, run the command:<br />
 `java -jar build/libs/jar_file_name.jar`<br />
 The source Java files can be found in `src/main/java` folder

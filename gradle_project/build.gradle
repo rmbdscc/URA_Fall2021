@@ -11,19 +11,17 @@ buildscript {
 
 plugins {
     id 'java-library'
-    // id 'me.champeau.mrjar' version "0.1"
 }
 
 //apply plugin: 'java'
 apply plugin: 'application'
 apply plugin: 'com.igormaznitsa.jcp'
 apply plugin: 'me.champeau.mrjar'
-// group 'org.example'
-// version '1.0-SNAPSHOT'
-application {
-    mainClass = 'java.Main'
-}
-// mainClassName = 'java.Main'
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+mainClassName = 'java.HelloWorld'
 
 java {
     toolchain {
@@ -31,23 +29,14 @@ java {
     }
 }
 
-multiRelease {
-    targetVersions "build/jcp/", "build/jcp/", 8, 11
-    // targetVersions 8, 11
-}
-
 repositories {
     mavenLocal()
     mavenCentral()
 }
 
-// sourceSets {
-//     java11 {
-//         java {
-//             srcDirs = ['build/jcp/java11']
-//         }
-//     }
-// }
+multiRelease {
+    targetVersions "build/jcp/", "build/jcp/", 8, 8, 11
+}
 
 dependencies {
     implementation 'org.codehaus.groovy:groovy-all:3.0.5'
@@ -61,32 +50,18 @@ test {
 }
 
 jar {
-  manifest {
-    attributes(
-      'Main-Class': 'Main'
+    // added duplicatesStrategy to avoid warning messages
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    into('META-INF/versions/11') {
+        from sourceSets.java11.output
+    }
+    manifest.attributes(
+            'Multi-Release': 'true',
+            'Main-Class': 'Main'
     )
-  }
+    archiveBaseName = 'mutli-release'
 }
-
-// tasks.named('compileJava11Java') {
-//     javaCompiler = javaToolchains.compilerFor {
-//         languageVersion = JavaLanguageVersion.of(11)
-//     }
-// }
-
-// jar {
-//     // added duplicatesStrategy to avoid warning messages
-//     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-//     into('META-INF/versions/11') {
-//         from sourceSets.java11.output
-//     }
-//     manifest.attributes(
-//             'Multi-Release': 'true',
-//             'Main-Class': 'Main'
-//     )
-//     archiveBaseName = 'mutli-release'
-// }
 
 task compileWithJava8 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
@@ -126,31 +101,11 @@ task compileWithJava11 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
 
 }
 
-// task compileWithJava18 (type: com.igormaznitsa.jcp.gradle.JcpTask) {
-
-//     println "executing compileWithJava18"
-//     println sourceSets.main.java.srcDirs
-
-//     def java_dir = 'build/jcp/java18'
-
-//     outputs.dir(java_dir)
-//     sources = sourceSets.main.java.srcDirs
-
-//     vars = [currentJava: '18']
-//     target = new File(java_dir)
-
-//     doLast{
-//         println("Incoming preprocess files: " + incomingFiles.size())
-//         println("Resulted preprocess files: " + outcomingFiles.size())
-//     }
-
-// }
-
-// task changeSourceFolder(){
-//     doLast{
-//         sourceSets.main.java.srcDirs = ["build/jcp/java"]
-//     }
-// }
+task changeSourceFolder(){
+    doLast{
+        sourceSets.main.java.srcDirs = ["build/jcp/java"]
+    }
+}
 
 import java.security.MessageDigest;
 import java.nio.file.Files;
@@ -195,12 +150,10 @@ task deleteDuplicatedFiles(){
     }
 }
 
-// compileWithJava11.dependsOn compileWithJava18
 compileWithJava8.dependsOn(compileWithJava11)
 deleteDuplicatedFiles.dependsOn compileWithJava8
-// changeSourceFolder.dependsOn deleteDuplicatedFiles
-// compileJava.dependsOn deleteDuplicatedFiles
-
+changeSourceFolder.dependsOn deleteDuplicatedFiles
+compileJava.dependsOn changeSourceFolder
 
 
 
